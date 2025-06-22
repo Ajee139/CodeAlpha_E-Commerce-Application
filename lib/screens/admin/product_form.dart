@@ -5,12 +5,14 @@ class ProductFormPage extends StatefulWidget {
   final bool isEdit;
   final String? productId;
   final Map<String, dynamic>? productData;
+  final bool isDialog;
 
   const ProductFormPage({
     super.key,
     this.isEdit = false,
     this.productId,
     this.productData,
+    this.isDialog = false,
   });
 
   @override
@@ -60,7 +62,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
       content: Text(widget.isEdit ? "Product updated!" : "Product added!"),
     ));
 
-    Navigator.pop(context);
+     if (widget.isDialog) {
+    Navigator.pop(context); // Only pop if it’s a dialog or pushed route
+  }
   }
 
   @override
@@ -94,64 +98,47 @@ class _ProductFormPageState extends State<ProductFormPage> {
             padding: const EdgeInsets.symmetric(horizontal: 10.0),
             child: ListView(
               children: [
+                const SizedBox(height: 16),
+                // Header
+                if (widget.isDialog)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          widget.isEdit ? "Edit Product" : "Add Product",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.black54),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: Text(
+                      widget.isEdit ? "Edit Product" : "Add New Product",
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+
+                // Form fields
+                _buildLabeledField("Seller ID", sellerIdController, inputDecoration),
+                _buildLabeledField("Product Name", productNameController, inputDecoration),
+                _buildLabeledField("Product Description", descriptionController, inputDecoration, maxLines: 4),
+                _buildLabeledField("Image URL", imageUrlController, inputDecoration),
+                _buildLabeledField("Price", priceController, inputDecoration, isNumber: true),
+                _buildLabeledField("Stock", stockController, inputDecoration, isNumber: true),
+
                 const SizedBox(height: 30),
-                Text(
-                  widget.isEdit ? "Edit Product" : "Add New Product",
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 20),
-
-                const Text('Seller ID'),
-                const SizedBox(height: 5),
-                TextFormField(
-                  controller: sellerIdController,
-                  decoration: inputDecoration.copyWith(hintText: 'Enter Seller ID'),
-                ),
-                const SizedBox(height: 20),
-
-                const Text('Product Name'),
-                const SizedBox(height: 5),
-                TextFormField(
-                  controller: productNameController,
-                  decoration: inputDecoration.copyWith(hintText: 'Enter Product Name'),
-                ),
-                const SizedBox(height: 20),
-
-                const Text('Product Description'),
-                const SizedBox(height: 5),
-                TextFormField(
-                  controller: descriptionController,
-                  maxLines: 4,
-                  decoration: inputDecoration.copyWith(hintText: 'Enter Product Description'),
-                ),
-                const SizedBox(height: 20),
-
-                const Text('Image URL'),
-                const SizedBox(height: 5),
-                TextFormField(
-                  controller: imageUrlController,
-                  decoration: inputDecoration.copyWith(hintText: 'Enter Image URL'),
-                ),
-                const SizedBox(height: 20),
-
-                const Text('Price'),
-                const SizedBox(height: 5),
-                TextFormField(
-                  controller: priceController,
-                  keyboardType: TextInputType.number,
-                  decoration: inputDecoration.copyWith(hintText: 'Enter Product Price'),
-                ),
-                const SizedBox(height: 20),
-
-                const Text('Stock'),
-                const SizedBox(height: 5),
-                TextFormField(
-                  controller: stockController,
-                  keyboardType: TextInputType.number,
-                  decoration: inputDecoration.copyWith(hintText: 'Enter Stock Quantity'),
-                ),
-                const SizedBox(height: 30),
-
                 ElevatedButton(
                   onPressed: submit,
                   style: ElevatedButton.styleFrom(
@@ -159,13 +146,33 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text(widget.isEdit ? "Update Product" : "Add Product", style: const TextStyle(fontSize: 16)),
+                  child: Text(widget.isEdit ? "Update Product" : "Add Product",
+                      style: const TextStyle(fontSize: 16)),
                 )
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildLabeledField(String label, TextEditingController controller,
+      InputDecoration baseDecoration,
+      {bool isNumber = false, int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: controller,
+          maxLines: maxLines,
+          keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+          decoration: baseDecoration.copyWith(hintText: 'Enter $label'),
+        ),
+        const SizedBox(height: 20),
+      ],
     );
   }
 }
