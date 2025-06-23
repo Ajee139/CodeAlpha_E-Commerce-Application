@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:html' as html; // for web file input
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class ProductFormPage extends StatefulWidget {
   final bool isEdit;
@@ -27,6 +31,9 @@ class _ProductFormPageState extends State<ProductFormPage> {
   final TextEditingController priceController = TextEditingController();
   final TextEditingController stockController = TextEditingController();
 
+  String? previewImageUrl;
+  bool isUploading = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,10 +45,13 @@ class _ProductFormPageState extends State<ProductFormPage> {
       imageUrlController.text = data['image_url'] ?? '';
       priceController.text = data['price'].toString();
       stockController.text = data['stock'].toString();
+      previewImageUrl = data['image_url'];
     }
   }
 
   Future<void> submit() async {
+    if (!_validateInputs()) return;
+
     final docRef = widget.isEdit
         ? FirebaseFirestore.instance.collection('products').doc(widget.productId)
         : FirebaseFirestore.instance.collection('products').doc();
@@ -54,6 +64,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
       'image_url': imageUrlController.text.trim(),
       'price': double.tryParse(priceController.text.trim()) ?? 0.0,
       'stock': int.tryParse(stockController.text.trim()) ?? 0,
+      if (!widget.isEdit) 'created_at': FieldValue.serverTimestamp()
+
     };
 
     await docRef.set(payload);
@@ -62,9 +74,51 @@ class _ProductFormPageState extends State<ProductFormPage> {
       content: Text(widget.isEdit ? "Product updated!" : "Product added!"),
     ));
 
-     if (widget.isDialog) {
-    Navigator.pop(context); // Only pop if it’s a dialog or pushed route
+    if (widget.isDialog) Navigator.pop(context);
   }
+
+  bool _validateInputs() {
+    if (sellerIdController.text.isEmpty ||
+        productNameController.text.isEmpty ||
+        descriptionController.text.isEmpty ||
+        imageUrlController.text.isEmpty ||
+        double.tryParse(priceController.text) == null ||
+        int.tryParse(stockController.text) == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields correctly.')),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<void> pickAndUploadImage() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result == null || result.files.single.bytes == null) return;
+
+    final fileBytes = result.files.single.bytes!;
+    final fileName = result.files.single.name;
+
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('https://api.cloudinary.com/v1_1/di04amjly/image/upload'),
+    );
+    request.fields['upload_preset'] = 'my_unsigned_preset';
+    request.files.add(http.MultipartFile.fromBytes('file', fileBytes, filename: fileName));
+
+    setState(() => isUploading = true);
+    final response = await request.send();
+    setState(() => isUploading = false);
+
+    final resBody = await response.stream.bytesToString();
+    final json = jsonDecode(resBody);
+
+    if (json['secure_url'] != null) {
+      setState(() {
+        imageUrlController.text = json['secure_url'];
+        previewImageUrl = json['secure_url'];
+      });
+    }
   }
 
   @override
@@ -99,44 +153,43 @@ class _ProductFormPageState extends State<ProductFormPage> {
             child: ListView(
               children: [
                 const SizedBox(height: 16),
-                // Header
                 if (widget.isDialog)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          widget.isEdit ? "Edit Product" : "Add Product",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        widget.isEdit ? "Edit Product" : "Add Product",
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close, color: Colors.black54),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      )
+                    ],
                   )
                 else
+                  const Text(
+                    'Add New Product',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                const SizedBox(height: 16),
+
+                if (previewImageUrl != null)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: Text(
-                      widget.isEdit ? "Edit Product" : "Add New Product",
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Image.network(previewImageUrl!, height: 150, fit: BoxFit.cover),
                   ),
 
-                // Form fields
-                _buildLabeledField("Seller ID", sellerIdController, inputDecoration),
-                _buildLabeledField("Product Name", productNameController, inputDecoration),
-                _buildLabeledField("Product Description", descriptionController, inputDecoration, maxLines: 4),
-                _buildLabeledField("Image URL", imageUrlController, inputDecoration),
-                _buildLabeledField("Price", priceController, inputDecoration, isNumber: true),
-                _buildLabeledField("Stock", stockController, inputDecoration, isNumber: true),
+                _buildField("Seller ID", sellerIdController, inputDecoration),
+                _buildField("Product Name", productNameController, inputDecoration),
+                _buildField("Product Description", descriptionController, inputDecoration, maxLines: 4),
+                _buildImageField(inputDecoration),
+                _buildField("Price", priceController, inputDecoration, isNumber: true),
+                _buildField("Stock", stockController, inputDecoration, isNumber: true),
 
                 const SizedBox(height: 30),
                 ElevatedButton(
@@ -148,7 +201,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   ),
                   child: Text(widget.isEdit ? "Update Product" : "Add Product",
                       style: const TextStyle(fontSize: 16)),
-                )
+                ),
               ],
             ),
           );
@@ -157,9 +210,8 @@ class _ProductFormPageState extends State<ProductFormPage> {
     );
   }
 
-  Widget _buildLabeledField(String label, TextEditingController controller,
-      InputDecoration baseDecoration,
-      {bool isNumber = false, int maxLines = 1}) {
+  Widget _buildField(String label, TextEditingController controller, InputDecoration decoration,
+      {bool isNumber = false, int maxLines = 1, void Function(String)? onChanged}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -167,11 +219,39 @@ class _ProductFormPageState extends State<ProductFormPage> {
         const SizedBox(height: 5),
         TextFormField(
           controller: controller,
-          maxLines: maxLines,
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-          decoration: baseDecoration.copyWith(hintText: 'Enter $label'),
+          maxLines: maxLines,
+          decoration: decoration.copyWith(hintText: "Enter $label"),
+          onChanged: onChanged,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildImageField(InputDecoration decoration) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text("Image URL"),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: imageUrlController,
+          onChanged: (val) => setState(() => previewImageUrl = val),
+          decoration: decoration.copyWith(
+            hintText: "Enter Image URL",
+            suffixIcon: IconButton(
+              icon: isUploading
+                  ? const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.cloud_upload, color: Colors.pinkAccent),
+              onPressed: isUploading ? null : pickAndUploadImage,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }

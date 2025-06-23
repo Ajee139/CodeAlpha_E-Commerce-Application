@@ -12,38 +12,123 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
+  bool isLoading = false;
+
   Future<void> login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter email and password")),
+      );
+      return;
+    }
+
+    setState(() => isLoading = true);
+
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
+        email: email,
+        password: password,
       );
-      Navigator.pushReplacementNamed(context, '/addProducts');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Login successful")),
+      );
+
+      Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Login Failed: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login Failed: $e")),
+      );
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final inputDecoration = InputDecoration(
+      filled: true,
+      fillColor: const Color(0xFFF9EAEA),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      hintStyle: const TextStyle(color: Colors.pinkAccent),
+    );
+
     return Scaffold(
-      appBar: AppBar(title: Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            TextField(controller: emailController, decoration: InputDecoration(labelText: 'Email')),
-            SizedBox(height: 10),
-            TextField(controller: passwordController, decoration: InputDecoration(labelText: 'Password'), obscureText: true),
-            SizedBox(height: 20),
-            ElevatedButton(onPressed: login, child: Text('Login')),
-            TextButton(
-              onPressed: () => Navigator.pushReplacementNamed(context, '/signup'),
-              child: Text('Don\'t have an account? Sign Up'),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text("Login"),
+        backgroundColor: Colors.pinkAccent,
+        foregroundColor: Colors.white,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: ListView(
+              children: [
+                const SizedBox(height: 30),
+                const Text(
+                  'Welcome Back',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+
+                const Text('Email'),
+                const SizedBox(height: 5),
+                TextFormField(
+                  controller: emailController,
+                  decoration: inputDecoration.copyWith(hintText: "Enter Email"),
+                ),
+                const SizedBox(height: 20),
+
+                const Text('Password'),
+                const SizedBox(height: 5),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: inputDecoration.copyWith(hintText: "Enter Password"),
+                ),
+                const SizedBox(height: 30),
+
+                ElevatedButton(
+                  onPressed: isLoading ? null : login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : const Text("Login", style: TextStyle(fontSize: 16)),
+                ),
+                const SizedBox(height: 10),
+
+                TextButton(
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/signup'),
+                  child: const Text("Don't have an account? Sign Up"),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 }

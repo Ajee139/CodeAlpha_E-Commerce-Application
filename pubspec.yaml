@@ -38,6 +38,11 @@ dependencies:
   firebase_auth:
   cloud_firestore:
   provider: ^6.1.5
+  file_picker: ^10.2.0
+  http: ^1.4.0
+  flutter_stripe: 
+  flutter_stripe_web: 
+  cloud_functions: 
 
 dev_dependencies:
   flutter_test:

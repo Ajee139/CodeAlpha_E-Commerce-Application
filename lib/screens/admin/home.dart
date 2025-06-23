@@ -1,20 +1,21 @@
+import 'package:ecomm/models/product_sort_option.dart'; // Make sure this import is correct
 import 'package:ecomm/providers/product_stats_provider.dart';
 import 'package:ecomm/screens/admin/product_list.dart';
 import 'package:flutter/material.dart';
-
 import 'package:provider/provider.dart';
 
 class AdminHome extends StatefulWidget {
-   final VoidCallback onAddPressed;
+  final VoidCallback onAddPressed;
 
   const AdminHome({super.key, required this.onAddPressed});
-  // const AdminHome({super.key});
 
   @override
   State<AdminHome> createState() => _AdminHomeState();
 }
 
 class _AdminHomeState extends State<AdminHome> {
+  ProductSortOption _selectedSort = ProductSortOption.dateNewest;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,6 +30,7 @@ class _AdminHomeState extends State<AdminHome> {
             icon: const Icon(Icons.add),
             onPressed: widget.onAddPressed,
           ),
+          
         ],
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
@@ -57,7 +59,39 @@ class _AdminHomeState extends State<AdminHome> {
                   child: _buildInfoCard("Pending Orders", "15", constraints, 0.9, 0.18),
                 ),
                 const SizedBox(height: 30),
-                const Expanded(child: ProductList()),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("All Products", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    PopupMenuButton<ProductSortOption>(
+                      icon: const Icon(Icons.filter_list),
+                      initialValue: _selectedSort,
+                      onSelected: (value) {
+                        setState(() => _selectedSort = value);
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: ProductSortOption.dateNewest,
+                          child: Text("Newest First"),
+                        ),
+                        const PopupMenuItem(
+                          value: ProductSortOption.dateOldest,
+                          child: Text("Oldest First"),
+                        ),
+                        const PopupMenuItem(
+                          value: ProductSortOption.priceLowToHigh,
+                          child: Text("Price: Low to High"),
+                        ),
+                        const PopupMenuItem(
+                          value: ProductSortOption.priceHighToLow,
+                          child: Text("Price: High to Low"),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ProductList(sortOption: _selectedSort),
               ],
             ),
           );
@@ -67,7 +101,12 @@ class _AdminHomeState extends State<AdminHome> {
   }
 
   Widget _buildInfoCard(
-      String title, String value, BoxConstraints constraints, double widthFactor, double heightFactor) {
+    String title,
+    String value,
+    BoxConstraints constraints,
+    double widthFactor,
+    double heightFactor,
+  ) {
     return Container(
       width: constraints.maxWidth * widthFactor,
       height: constraints.maxHeight * heightFactor,
