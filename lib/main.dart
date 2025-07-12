@@ -1,4 +1,4 @@
-import 'package:ecomm/consts.dart';
+
 import 'package:ecomm/providers/cart_provider.dart';
 import 'package:ecomm/screens/admin/sellerDashboard.dart';
 import 'package:ecomm/screens/buyer_home_page.dart';
@@ -24,7 +24,7 @@ void main() async {
   );
   print('After Firebase init');
 
-  Stripe.publishableKey = stripePublishableKey;
+  // Stripe.publishableKey = stripePublishableKey;
   print('Before Stripe settings');
   await Stripe.instance.applySettings();
   print('After Stripe settings');
