@@ -1,4 +1,5 @@
 import 'package:ecomm/providers/cart_provider.dart';
+import 'package:ecomm/services/stripe_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -48,11 +49,34 @@ class CartPage extends StatelessWidget {
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Proceeding to checkout...")),
-                          );
-                        },
+onPressed: () async {
+  final userId = Provider.of<CartProvider>(context, listen: false).items.isNotEmpty
+      ? null
+      : null; // fallback, but will always have items if button is visible
+
+  final cartProvider = Provider.of<CartProvider>(context, listen: false);
+  final success = await StripeService.instance.makePayment(
+    amount: cartProvider.totalPrice,
+    currency: "usd",
+    items: cartProvider.items.values.toList(),
+    userId: userId ?? null, // you can get userId from FirebaseAuth inside StripeService
+    onOrderSaved: () {
+      cartProvider.clearCart();
+      Navigator.pushReplacementNamed(context, '/orders');
+    },
+    context: context,
+  );
+  if (success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Payment successful! Order placed.")),
+    );
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Payment failed. Please try again.")),
+    );
+  }
+},
+
                         style: ElevatedButton.styleFrom(backgroundColor: Colors.pinkAccent),
                         child: const Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),

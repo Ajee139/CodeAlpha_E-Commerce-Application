@@ -19,7 +19,9 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       appBar: AppBar(
+        automaticallyImplyLeading: false, // 👈 hides the default back button
         centerTitle: true,
         title: const Text(
           "Products",

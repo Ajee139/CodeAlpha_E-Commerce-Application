@@ -1,3 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ecomm/screens/admin/home.dart';
+import 'package:ecomm/screens/admin/sellerDashboard.dart';
+import 'package:ecomm/screens/buyer_home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -28,16 +32,45 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => isLoading = true);
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+     UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+  email: email,
+  password: password,
+);
+
+      
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Login successful")),
       );
+// Get user UID
+    String uid = userCredential.user!.uid;
 
-      Navigator.pushReplacementNamed(context, '/home');
+    // Fetch user role from Firestore
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .get();
+
+    if (!userDoc.exists) {
+      throw Exception("User document not found in Firestore.");
+    }
+
+    String status = userDoc.get('status'); // e.g. 'admin' or 'user'
+
+    // Navigate based on role
+    if (status == 'admin') {
+      Navigator.pushReplacement(
+  context,
+  MaterialPageRoute(builder: (_) => const Dashboard()),
+);
+      
+    } else if (status == 'user') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => BuyerHomePage()),
+      );
+    } 
+      // Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Login Failed: $e")),

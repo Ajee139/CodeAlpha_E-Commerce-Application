@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:html' as html; // for web file input
+// for web file input
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';

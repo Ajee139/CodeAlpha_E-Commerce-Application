@@ -1,6 +1,8 @@
 
+import 'package:ecomm/screens/admin/admin_profile.dart';
 import 'package:ecomm/screens/admin/home.dart';
 import 'package:ecomm/screens/admin/product_form.dart';
+import 'package:ecomm/screens/orders.dart';
 import 'package:flutter/material.dart';
 
 class Dashboard extends StatefulWidget {
@@ -25,15 +27,15 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     // Move pages here so _onItemTapped is in scope
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       AdminHome(onAddPressed: () => _onItemTapped(1)),
       ProductFormPage(isEdit: false),
-      const Center(child: Text('Orders')),
-      const Center(child: Text('Profile')),
+      OrderPage(),
+      AdminProfile()
     ];
 
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.pinkAccent,

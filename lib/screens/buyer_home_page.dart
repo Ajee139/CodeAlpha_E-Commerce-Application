@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecomm/models/product_sort_option.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class BuyerHomePage extends StatefulWidget {
@@ -40,7 +41,13 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(onPressed: (){}, icon: Icon(Icons.person)),
+        leading: Builder(
+          builder: (context) {
+            return IconButton(onPressed: (){
+              Scaffold.of(context).openDrawer();
+            }, icon: Icon(Icons.person));
+          }
+        ),
         title: const Text("Shop", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -55,6 +62,64 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
           ),
         ],
       ),
+      drawer: Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: Colors.blue,
+            ),
+            child: Text(
+              'Welcome to Shop',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+              ),
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.home),
+            title: Text('Home'),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.person),
+            title: Text('Profile'),
+            onTap: () {
+              Navigator.pushNamed(context, '/profile');
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.shopping_cart),
+            title: Text('Cart'),
+            onTap: () {
+              Navigator.pushNamed(context, '/cart');
+            },
+          ),
+
+          ListTile(
+            leading: Icon(Icons.payment),
+            title: Text('Orders'),
+            onTap: () {
+              Navigator.pushNamed(context, '/orders');
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.exit_to_app),
+            title: Text('Logout'),
+            onTap: () {
+              FirebaseAuth.instance.signOut().then((_) {
+                Navigator.pushReplacementNamed(context, '/login');
+              });
+              Navigator.pushNamed(context, '/login');
+            },
+          ),
+        ],
+      ),
+    ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
