@@ -11,7 +11,9 @@ class OrderPage extends StatelessWidget {
     final userId = FirebaseAuth.instance.currentUser?.uid;
 
     if (userId == null) {
-      return const Center(child: Text("You must be logged in."));
+      return const Scaffold(
+        body: Center(child: Text("You must be logged in.")),
+      );
     }
 
     final ordersStream = FirebaseFirestore.instance
@@ -34,45 +36,100 @@ class OrderPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          }
+
+          final docs = snapshot.data?.docs ?? [];
+
+          // Filter out documents with missing timestamps
+          final validOrders = docs.where((doc) => doc.data()['created_at'] != null).toList();
+
+          if (validOrders.isEmpty) {
             return const Center(child: Text("You have no orders."));
           }
 
-          final orders = snapshot.data!.docs;
-
           return ListView.builder(
-            itemCount: orders.length,
+            itemCount: validOrders.length,
             itemBuilder: (context, index) {
-              final order = orders[index].data();
+              final order = validOrders[index].data();
               final status = order['status'];
               final total = order['total'];
               final createdAt = order['created_at']?.toDate();
-              final orderId = orders[index].id;
+              final orderId = validOrders[index].id;
 
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: ListTile(
-                  title: Text("Order #$orderId"),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Status: ${status.toString().toUpperCase()}"),
-                      Text("Total: ₦$total"),
-                      if (createdAt != null)
-                        Text("Date: ${createdAt.toString().split(' ').first}"),
-                    ],
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => OrderDetailsPage(orderData: order),
-                      ),
-                    );
-                  },
+  margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(12),
+  ),
+  elevation: 2,
+  child: InkWell(
+    borderRadius: BorderRadius.circular(12),
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OrderDetailsPage(orderData: order),
+        ),
+      );
+    },
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// Order ID & Status
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Order #$orderId",
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
-              );
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.pinkAccent.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  status.toString().toUpperCase(),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.pinkAccent,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          /// Order Details
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Total: \$${total.toStringAsFixed(2)}",
+                style: const TextStyle(fontSize: 14),
+              ),
+              if (createdAt != null)
+                Text(
+                  "Date: ${createdAt.toLocal().toString().split(' ').first}",
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+            ],
+          ),
+        ],
+      ),
+    ),
+  ),
+);
+
             },
           );
         },
@@ -80,4 +137,3 @@ class OrderPage extends StatelessWidget {
     );
   }
 }
-

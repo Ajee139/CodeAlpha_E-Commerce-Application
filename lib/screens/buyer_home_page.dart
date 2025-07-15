@@ -11,6 +11,16 @@ class BuyerHomePage extends StatefulWidget {
 }
 
 class _BuyerHomePageState extends State<BuyerHomePage> {
+
+Future<String> getFullName() async {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return 'User';
+
+  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  return doc.data()?['full_name'] ?? 'User';
+}
+
+
   String searchQuery = '';
   ProductSortOption _sort = ProductSortOption.dateNewest;
   final TextEditingController _searchController = TextEditingController();
@@ -48,7 +58,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
             }, icon: Icon(Icons.person));
           }
         ),
-        title: const Text("Shop", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+        title: const Text("SneakShop", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
@@ -66,18 +76,20 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue,
-            ),
-            child: Text(
-              'Welcome to Shop',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-              ),
-            ),
-          ),
+          Container(
+  height: 200, // Set to desired height
+  
+  padding: const EdgeInsets.all(16),
+  alignment: Alignment.centerLeft,
+  child: FutureBuilder<String>(
+    future: getFullName(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) return const Text('');
+      return Center(child: Text(textAlign: TextAlign.center, 'Hello, ${snapshot.data}', style: const TextStyle(color: Colors.pinkAccent, fontSize: 20, fontWeight: FontWeight.bold)));
+    },
+  ),
+),
+
           ListTile(
             leading: Icon(Icons.home),
             title: Text('Home'),
@@ -85,13 +97,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
               Navigator.pop(context);
             },
           ),
-          ListTile(
-            leading: Icon(Icons.person),
-            title: Text('Profile'),
-            onTap: () {
-              Navigator.pushNamed(context, '/profile');
-            },
-          ),
+         
           ListTile(
             leading: Icon(Icons.shopping_cart),
             title: Text('Cart'),

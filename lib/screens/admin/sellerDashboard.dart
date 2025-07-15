@@ -1,5 +1,6 @@
 
 import 'package:ecomm/screens/admin/admin_profile.dart';
+import 'package:ecomm/screens/admin/all_orders_page.dart';
 import 'package:ecomm/screens/admin/home.dart';
 import 'package:ecomm/screens/admin/product_form.dart';
 import 'package:ecomm/screens/orders.dart';
@@ -30,7 +31,8 @@ class _DashboardState extends State<Dashboard> {
     final List<Widget> pages = [
       AdminHome(onAddPressed: () => _onItemTapped(1)),
       ProductFormPage(isEdit: false),
-      OrderPage(),
+      const AllOrdersPage(),
+
       AdminProfile()
     ];
 

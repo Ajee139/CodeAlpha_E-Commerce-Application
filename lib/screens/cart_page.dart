@@ -2,7 +2,7 @@ import 'package:ecomm/providers/cart_provider.dart';
 import 'package:ecomm/services/stripe_service.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
 
@@ -50,9 +50,10 @@ class CartPage extends StatelessWidget {
                       const SizedBox(height: 10),
                       ElevatedButton(
 onPressed: () async {
-  final userId = Provider.of<CartProvider>(context, listen: false).items.isNotEmpty
-      ? null
-      : null; // fallback, but will always have items if button is visible
+  final userId = FirebaseAuth.instance.currentUser?.uid;
+  // final userId = Provider.of<CartProvider>(context, listen: false).items.isNotEmpty
+  //     ? null
+  //     : null; // fallback, but will always have items if button is visible
 
   final cartProvider = Provider.of<CartProvider>(context, listen: false);
   final success = await StripeService.instance.makePayment(
