@@ -51,79 +51,79 @@ class _ProductCardState extends State<ProductCard> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => isHovered = true),
-      onExit: (_) => setState(() => isHovered = false),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFFF9F9F9),
-                    image: DecorationImage(
-                      image: NetworkImage(widget.data['image_url']),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  width: double.infinity,
-                  height: double.infinity,
+ @override
+Widget build(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: const Color(0xFFF9F9F9),
+                image: DecorationImage(
+                  image: NetworkImage(widget.data['image_url']),
+                  fit: BoxFit.cover,
                 ),
-                if (isHovered)
-                  Positioned(
-                    top: 8,
-                    right: 8,
+              ),
+              width: double.infinity,
+              height: double.infinity,
+            ),
+
+            
+            Positioned(
+              top: 8,
+              right: 8,
+              child: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, color: Colors.white),
+                color: Colors.white,
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    widget.onEdit();
+                  } else if (value == 'delete') {
+                    _confirmAndDelete();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Edit Button
-                        GestureDetector(
-                          onTap: widget.onEdit,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            margin: const EdgeInsets.only(right: 6),
-                            decoration: const BoxDecoration(
-                              color: Colors.black54,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.edit, size: 20, color: Colors.white),
-                          ),
-                        ),
-                        // Delete Button
-                        GestureDetector(
-                          onTap: _confirmAndDelete,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.redAccent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.delete, size: 20, color: Colors.white),
-                          ),
-                        ),
+                        Icon(Icons.edit, size: 18),
+                        SizedBox(width: 8),
+                        Text("Edit"),
                       ],
                     ),
                   ),
-              ],
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 18, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text("Delete"),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            widget.data['name'],
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            "\$${widget.data['price']}",
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
+      const SizedBox(height: 5),
+      Text(
+        widget.data['name'],
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      const SizedBox(height: 5),
+      Text(
+        "\$${widget.data['price']}",
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+    ],
+  );
+}
 }

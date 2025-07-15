@@ -42,7 +42,6 @@ class OrderPage extends StatelessWidget {
 
           final docs = snapshot.data?.docs ?? [];
 
-          // Filter out documents with missing timestamps
           final validOrders = docs.where((doc) => doc.data()['created_at'] != null).toList();
 
           if (validOrders.isEmpty) {
@@ -81,32 +80,42 @@ class OrderPage extends StatelessWidget {
         children: [
           /// Order ID & Status
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Order #$orderId",
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.pinkAccent.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  status.toString().toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.pinkAccent,
-                  ),
-                ),
-              ),
-            ],
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    Expanded(
+      child: Text(
+        "Order #$orderId",
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+        overflow: TextOverflow.ellipsis,
+      ),
+    ),
+    const SizedBox(width: 10),
+    Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.pinkAccent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Flexible(
+        child: Text(
+          status.toString().toUpperCase(),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.pinkAccent,
           ),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 1,
+          softWrap: false,
+        ),
+      ),
+    ),
+  ],
+),
+
           const SizedBox(height: 12),
 
           /// Order Details

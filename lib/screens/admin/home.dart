@@ -16,6 +16,7 @@ class AdminHome extends StatefulWidget {
 }
 
 class _AdminHomeState extends State<AdminHome> {
+  
   Future<String> getFullName() async {
   final uid = FirebaseAuth.instance.currentUser?.uid;
   if (uid == null) return 'User';
@@ -47,10 +48,10 @@ class _AdminHomeState extends State<AdminHome> {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.add),
-          //   onPressed: widget.onAddPressed,
-          // ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: widget.onAddPressed,
+          ),
           
         ],
         backgroundColor: Colors.white,
@@ -62,7 +63,7 @@ class _AdminHomeState extends State<AdminHome> {
           padding: EdgeInsets.zero,
           children: [
             Container(
-  height: 200, // Set to desired height
+  height: 200, 
   
   padding: const EdgeInsets.all(16),
   alignment: Alignment.centerLeft,
@@ -88,66 +89,81 @@ ListTile(
         ),
       ),
       backgroundColor: Colors.white,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return Padding(
-            padding: const EdgeInsets.all(10.0),
-            child: ListView(
-              children: [
-                Consumer<ProductStatsProvider>(
-                  builder: (context, stats, _) {
-                    return Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildInfoCard("Total Products", "${stats.totalProducts}", constraints, 0.45, 0.2),
-                        _buildInfoCard("Total Stock", "${stats.totalStock}", constraints, 0.45, 0.2),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-                Center(
-                  child: _buildInfoCard("Pending Orders", "15", constraints, 0.9, 0.18),
-                ),
-                const SizedBox(height: 30),
-                Row(
+      body: RefreshIndicator(
+  onRefresh: () async {
+    final statsProvider = Provider.of<ProductStatsProvider>(context, listen: false);
+
+    
+    final productSnapshot = await FirebaseFirestore.instance.collection('products').get();
+    await statsProvider.calculateStats(productSnapshot.docs);
+  },
+  child: LayoutBuilder(
+    builder: (context, constraints) {
+      return Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(), 
+          children: [
+            Consumer<ProductStatsProvider>(
+              builder: (context, stats, _) {
+                return Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text("All Products", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    PopupMenuButton<ProductSortOption>(
-                      icon: const Icon(Icons.filter_list),
-                      initialValue: _selectedSort,
-                      onSelected: (value) {
-                        setState(() => _selectedSort = value);
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: ProductSortOption.dateNewest,
-                          child: Text("Newest First"),
-                        ),
-                        const PopupMenuItem(
-                          value: ProductSortOption.dateOldest,
-                          child: Text("Oldest First"),
-                        ),
-                        const PopupMenuItem(
-                          value: ProductSortOption.priceLowToHigh,
-                          child: Text("Price: Low to High"),
-                        ),
-                        const PopupMenuItem(
-                          value: ProductSortOption.priceHighToLow,
-                          child: Text("Price: High to Low"),
-                        ),
-                      ],
+                    _buildInfoCard("Total Products", "${stats.totalProducts}", constraints, 0.45, 0.2),
+                    _buildInfoCard("Total Stock", "${stats.totalStock}", constraints, 0.45, 0.2),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 20),
+            Consumer<ProductStatsProvider>(
+              builder: (context, stats, _) {
+                return Center(
+                  child: _buildInfoCard("Pending Orders", "${stats.pendingOrders}", constraints, 0.9, 0.18),
+                );
+              },
+            ),
+            const SizedBox(height: 30),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("All Products", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                PopupMenuButton<ProductSortOption>(
+                  icon: const Icon(Icons.filter_list),
+                  initialValue: _selectedSort,
+                  onSelected: (value) {
+                    setState(() => _selectedSort = value);
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: ProductSortOption.dateNewest,
+                      child: Text("Newest First"),
+                    ),
+                    PopupMenuItem(
+                      value: ProductSortOption.dateOldest,
+                      child: Text("Oldest First"),
+                    ),
+                    PopupMenuItem(
+                      value: ProductSortOption.priceLowToHigh,
+                      child: Text("Price: Low to High"),
+                    ),
+                    PopupMenuItem(
+                      value: ProductSortOption.priceHighToLow,
+                      child: Text("Price: High to Low"),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                ProductList(sortOption: _selectedSort),
               ],
             ),
-          );
-        },
-      ),
+            const SizedBox(height: 10),
+            ProductList(sortOption: _selectedSort),
+          ],
+        ),
+      );
+    },
+  ),
+),
+
     );
   }
 

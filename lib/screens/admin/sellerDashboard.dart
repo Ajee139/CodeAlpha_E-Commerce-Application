@@ -19,24 +19,25 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
-  final List<Widget> pages = [
-    AdminHome(onAddPressed: () {}),
-    ProductFormPage(isEdit: false),
-    const AllOrdersPage(),
-  ];
-
   Future<bool> _onWillPop() async {
     if (_selectedIndex != 0) {
       setState(() {
         _selectedIndex = 0; // Go back to Home tab
       });
-      return false; // Don't pop the app
+      return false; // Don't exit the app
     }
-    return true; // Exit the app if on Home tab
+    return true; // Allow exit
   }
 
   @override
   Widget build(BuildContext context) {
+    
+    final List<Widget> pages = [
+      AdminHome(onAddPressed: () => _onItemTapped(1)), // ← ✅ Fix is here
+      ProductFormPage(isEdit: false),
+      const AllOrdersPage(),
+    ];
+
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
@@ -47,18 +48,9 @@ class _DashboardState extends State<Dashboard> {
           unselectedItemColor: Colors.grey,
           onTap: _onItemTapped,
           items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.add_box_outlined),
-              label: 'Products',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.receipt_long),
-              label: 'Orders',
-            ),
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.add_box_outlined), label: 'Products'),
+            BottomNavigationBarItem(icon: Icon(Icons.receipt_long), label: 'Orders'),
           ],
         ),
       ),

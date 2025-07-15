@@ -70,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => BuyerHomePage()),
       );
     } 
-      // Navigator.pushReplacementNamed(context, '/home');
+      
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Login Failed: $e")),
@@ -95,6 +95,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("Login"),
         backgroundColor: Colors.pinkAccent,
         foregroundColor: Colors.white,
