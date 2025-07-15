@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecomm/models/product_sort_option.dart'; // Make sure this import is correct
 import 'package:ecomm/providers/product_stats_provider.dart';
 import 'package:ecomm/screens/admin/product_list.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -14,6 +16,13 @@ class AdminHome extends StatefulWidget {
 }
 
 class _AdminHomeState extends State<AdminHome> {
+  Future<String> getFullName() async {
+  final uid = FirebaseAuth.instance.currentUser?.uid;
+  if (uid == null) return 'User';
+
+  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+  return doc.data()?['full_name'] ?? 'User';
+}
   ProductSortOption _selectedSort = ProductSortOption.dateNewest;
 
   @override
@@ -21,22 +30,62 @@ class _AdminHomeState extends State<AdminHome> {
     return Scaffold(
       
       appBar: AppBar(
-        automaticallyImplyLeading: false, // 👈 hides the default back button
+        leading: Builder(
+          builder: (context) {
+            return IconButton(
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+              icon: const Icon(Icons.person),
+            );
+          },
+        ),
+        automaticallyImplyLeading: false, //hides the default back button
         centerTitle: true,
         title: const Text(
           "Products",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: widget.onAddPressed,
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.add),
+          //   onPressed: widget.onAddPressed,
+          // ),
           
         ],
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         elevation: 0,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+  height: 200, // Set to desired height
+  
+  padding: const EdgeInsets.all(16),
+  alignment: Alignment.centerLeft,
+  child: FutureBuilder<String>(
+    future: getFullName(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) return const Text('');
+      return Center(child: Text(textAlign: TextAlign.center, 'Hello, ${snapshot.data}', style: const TextStyle(color: Colors.pinkAccent, fontSize: 20, fontWeight: FontWeight.bold)));
+    },
+  ),
+),
+ListTile(
+            leading: Icon(Icons.exit_to_app),
+            title: Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              FirebaseAuth.instance.signOut().then((_) {
+                Navigator.pushReplacementNamed(context, '/login');
+              });
+              Navigator.pushNamed(context, '/login');
+            },
+          ),            
+          ],
+        ),
       ),
       backgroundColor: Colors.white,
       body: LayoutBuilder(

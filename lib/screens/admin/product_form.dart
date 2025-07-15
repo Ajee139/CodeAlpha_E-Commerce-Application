@@ -1,5 +1,4 @@
 import 'dart:convert';
-// for web file input
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -50,11 +49,16 @@ class _ProductFormPageState extends State<ProductFormPage> {
   }
 
   Future<void> submit() async {
-    if (!_validateInputs()) return;
+  if (!_validateInputs()) return;
 
-    final docRef = widget.isEdit
-        ? FirebaseFirestore.instance.collection('products').doc(widget.productId)
-        : FirebaseFirestore.instance.collection('products').doc();
+  final collection = FirebaseFirestore.instance.collection('products');
+
+  if (widget.isEdit && widget.productId != null) {
+    final docRef = collection.doc(widget.productId);
+
+    // Fetch existing data to retain `created_at`
+    final existing = await docRef.get();
+    final existingCreatedAt = existing.data()?['created_at'];
 
     final payload = {
       'id': docRef.id,
@@ -64,33 +68,45 @@ class _ProductFormPageState extends State<ProductFormPage> {
       'image_url': imageUrlController.text.trim(),
       'price': double.tryParse(priceController.text.trim()) ?? 0.0,
       'stock': int.tryParse(stockController.text.trim()) ?? 0,
-      if (!widget.isEdit) 'created_at': FieldValue.serverTimestamp()
-
+      'created_at': existingCreatedAt ?? FieldValue.serverTimestamp(), // retain or fallback
     };
 
     await docRef.set(payload);
-
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(widget.isEdit ? "Product updated!" : "Product added!"),
-    ));
-
-    if (widget.isDialog) Navigator.pop(context);
+  } else {
+    final docRef = collection.doc();
+    final payload = {
+      'id': docRef.id,
+      'seller_id': sellerIdController.text.trim(),
+      'name': productNameController.text.trim(),
+      'description': descriptionController.text.trim(),
+      'image_url': imageUrlController.text.trim(),
+      'price': double.tryParse(priceController.text.trim()) ?? 0.0,
+      'stock': int.tryParse(stockController.text.trim()) ?? 0,
+      'created_at': FieldValue.serverTimestamp(),
+    };
+    await docRef.set(payload);
   }
 
-  bool _validateInputs() {
-    if (sellerIdController.text.isEmpty ||
-        productNameController.text.isEmpty ||
-        descriptionController.text.isEmpty ||
-        imageUrlController.text.isEmpty ||
-        double.tryParse(priceController.text) == null ||
-        int.tryParse(stockController.text) == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields correctly.')),
-      );
-      return false;
-    }
-    return true;
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(widget.isEdit ? "Product updated!" : "Product added!"),
+  ));
+
+  if (widget.isDialog) Navigator.pop(context);
+}
+bool _validateInputs() {
+  if (sellerIdController.text.isEmpty ||
+      productNameController.text.isEmpty ||
+      descriptionController.text.isEmpty ||
+      imageUrlController.text.isEmpty ||
+      double.tryParse(priceController.text) == null ||
+      int.tryParse(stockController.text) == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please fill all fields correctly.')),
+    );
+    return false;
   }
+  return true;
+}
 
   Future<void> pickAndUploadImage() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
@@ -211,7 +227,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
   }
 
   Widget _buildField(String label, TextEditingController controller, InputDecoration decoration,
-      {bool isNumber = false, int maxLines = 1, void Function(String)? onChanged}) {
+      {bool isNumber = false, int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -222,7 +238,6 @@ class _ProductFormPageState extends State<ProductFormPage> {
           keyboardType: isNumber ? TextInputType.number : TextInputType.text,
           maxLines: maxLines,
           decoration: decoration.copyWith(hintText: "Enter $label"),
-          onChanged: onChanged,
         ),
         const SizedBox(height: 16),
       ],

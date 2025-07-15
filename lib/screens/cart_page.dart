@@ -51,16 +51,14 @@ class CartPage extends StatelessWidget {
                       ElevatedButton(
 onPressed: () async {
   final userId = FirebaseAuth.instance.currentUser?.uid;
-  // final userId = Provider.of<CartProvider>(context, listen: false).items.isNotEmpty
-  //     ? null
-  //     : null; // fallback, but will always have items if button is visible
+ 
 
   final cartProvider = Provider.of<CartProvider>(context, listen: false);
   final success = await StripeService.instance.makePayment(
     amount: cartProvider.totalPrice,
     currency: "usd",
     items: cartProvider.items.values.toList(),
-    userId: userId ?? null, // you can get userId from FirebaseAuth inside StripeService
+    userId: userId ?? null, 
     onOrderSaved: () {
       cartProvider.clearCart();
       Navigator.pushReplacementNamed(context, '/orders');

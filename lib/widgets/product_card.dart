@@ -119,7 +119,7 @@ class _ProductCardState extends State<ProductCard> {
           ),
           const SizedBox(height: 5),
           Text(
-            "#${widget.data['price']}",
+            "\$${widget.data['price']}",
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ],

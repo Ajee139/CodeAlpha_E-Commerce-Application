@@ -99,7 +99,7 @@ class _AdminOrderDetailsPageState extends State<AdminOrderDetailsPage> {
                     title: Text(item['name'] ?? ''),
                     subtitle: Text("Qty: ${item['quantity']}"),
                     trailing: Text(
-                      "₦${double.parse(item['price'].toString()).toStringAsFixed(2)}",
+                      "\$${double.parse(item['price'].toString()).toStringAsFixed(2)}",
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   );
@@ -110,7 +110,7 @@ class _AdminOrderDetailsPageState extends State<AdminOrderDetailsPage> {
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                "Total: ₦${double.parse(total.toString()).toStringAsFixed(2)}",
+                "Total: \$${double.parse(total.toString()).toStringAsFixed(2)}",
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             )

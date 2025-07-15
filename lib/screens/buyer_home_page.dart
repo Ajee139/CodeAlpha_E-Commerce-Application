@@ -11,39 +11,27 @@ class BuyerHomePage extends StatefulWidget {
 }
 
 class _BuyerHomePageState extends State<BuyerHomePage> {
+  Future<String> getFullName() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return 'User';
 
-Future<String> getFullName() async {
-  final uid = FirebaseAuth.instance.currentUser?.uid;
-  if (uid == null) return 'User';
-
-  final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
-  return doc.data()?['full_name'] ?? 'User';
-}
-
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    return doc.data()?['full_name'] ?? 'User';
+  }
 
   String searchQuery = '';
   ProductSortOption _sort = ProductSortOption.dateNewest;
   final TextEditingController _searchController = TextEditingController();
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> getSortedProductStream() {
-    Query<Map<String, dynamic>> query = FirebaseFirestore.instance.collection('products');
+  Stream<QuerySnapshot<Map<String, dynamic>>> getProductStream() {
+    return FirebaseFirestore.instance.collection('products').snapshots();
+  }
 
-    switch (_sort) {
-      case ProductSortOption.dateNewest:
-        query = query.orderBy('created_at', descending: true);
-        break;
-      case ProductSortOption.dateOldest:
-        query = query.orderBy('created_at', descending: false);
-        break;
-      case ProductSortOption.priceHighToLow:
-        query = query.orderBy('price', descending: true);
-        break;
-      case ProductSortOption.priceLowToHigh:
-        query = query.orderBy('price', descending: false);
-        break;
+  Timestamp _getTimestamp(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+    if (doc.data().containsKey('created_at') && doc['created_at'] != null) {
+      return doc['created_at'] as Timestamp;
     }
-
-    return query.snapshots();
+    return Timestamp(0, 0); // fallback
   }
 
   @override
@@ -53,10 +41,13 @@ Future<String> getFullName() async {
       appBar: AppBar(
         leading: Builder(
           builder: (context) {
-            return IconButton(onPressed: (){
-              Scaffold.of(context).openDrawer();
-            }, icon: Icon(Icons.person));
-          }
+            return IconButton(
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+              icon: const Icon(Icons.person),
+            );
+          },
         ),
         title: const Text("SneakShop", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
         centerTitle: true,
@@ -73,64 +64,68 @@ Future<String> getFullName() async {
         ],
       ),
       drawer: Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          Container(
-  height: 200, // Set to desired height
-  
-  padding: const EdgeInsets.all(16),
-  alignment: Alignment.centerLeft,
-  child: FutureBuilder<String>(
-    future: getFullName(),
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) return const Text('');
-      return Center(child: Text(textAlign: TextAlign.center, 'Hello, ${snapshot.data}', style: const TextStyle(color: Colors.pinkAccent, fontSize: 20, fontWeight: FontWeight.bold)));
-    },
-  ),
-),
-
-          ListTile(
-            leading: Icon(Icons.home),
-            title: Text('Home'),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
-         
-          ListTile(
-            leading: Icon(Icons.shopping_cart),
-            title: Text('Cart'),
-            onTap: () {
-              Navigator.pushNamed(context, '/cart');
-            },
-          ),
-
-          ListTile(
-            leading: Icon(Icons.payment),
-            title: Text('Orders'),
-            onTap: () {
-              Navigator.pushNamed(context, '/orders');
-            },
-          ),
-          ListTile(
-            leading: Icon(Icons.exit_to_app),
-            title: Text('Logout'),
-            onTap: () {
-              FirebaseAuth.instance.signOut().then((_) {
-                Navigator.pushReplacementNamed(context, '/login');
-              });
-              Navigator.pushNamed(context, '/login');
-            },
-          ),
-        ],
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Container(
+              height: 200,
+              padding: const EdgeInsets.all(16),
+              alignment: Alignment.centerLeft,
+              child: FutureBuilder<String>(
+                future: getFullName(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const Text('');
+                  return Center(
+                    child: Text(
+                      'Hello, ${snapshot.data}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.pinkAccent,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.shopping_cart),
+              title: const Text('Cart'),
+              onTap: () {
+                Navigator.pushNamed(context, '/cart');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.payment),
+              title: const Text('Orders'),
+              onTap: () {
+                Navigator.pushNamed(context, '/orders');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Logout', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                FirebaseAuth.instance.signOut().then((_) {
+                  Navigator.pushReplacementNamed(context, '/login');
+                });
+              },
+            ),
+          ],
+        ),
       ),
-    ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            // Search Field
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 15),
               decoration: BoxDecoration(
@@ -148,12 +143,9 @@ Future<String> getFullName() async {
               ),
             ),
             const SizedBox(height: 12),
-
-            // Filter Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // const Text("All Products", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 PopupMenuButton<ProductSortOption>(
                   icon: const Icon(Icons.filter_list),
                   initialValue: _sort,
@@ -180,15 +172,14 @@ Future<String> getFullName() async {
               ],
             ),
             const SizedBox(height: 10),
-
-            // Product Grid
             Expanded(
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                stream: getSortedProductStream(),
+                stream: getProductStream(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   }
+
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return const Center(child: Text("No products available."));
                   }
@@ -198,12 +189,26 @@ Future<String> getFullName() async {
                     return name.contains(searchQuery.toLowerCase());
                   }).toList();
 
+                  // Sort manually in Dart
+                  filtered.sort((a, b) {
+                    switch (_sort) {
+                      case ProductSortOption.dateNewest:
+                        return _getTimestamp(b).compareTo(_getTimestamp(a));
+                      case ProductSortOption.dateOldest:
+                        return _getTimestamp(a).compareTo(_getTimestamp(b));
+                      case ProductSortOption.priceHighToLow:
+                        return (b['price'] ?? 0).compareTo(a['price'] ?? 0);
+                      case ProductSortOption.priceLowToHigh:
+                        return (a['price'] ?? 0).compareTo(b['price'] ?? 0);
+                    }
+                  });
+
                   return GridView.builder(
                     itemCount: filtered.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
+                    gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 250,
                       mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
                       childAspectRatio: 0.75,
                     ),
                     itemBuilder: (context, index) {
@@ -242,7 +247,7 @@ Future<String> getFullName() async {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      "\$${product['price']}",
+                                      "₦${product['price']}",
                                       style: const TextStyle(color: Colors.pinkAccent, fontWeight: FontWeight.w600),
                                     ),
                                   ],

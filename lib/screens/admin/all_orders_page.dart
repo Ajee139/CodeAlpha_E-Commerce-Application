@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ecomm/screens/admin/order_detail_admin.dart';
-import 'package:ecomm/screens/orderDetailPage.dart';
 import 'package:flutter/material.dart';
 
 class AllOrdersPage extends StatelessWidget {
@@ -15,6 +14,7 @@ class AllOrdersPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text("All Orders"),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -39,6 +39,7 @@ class AllOrdersPage extends StatelessWidget {
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final orderDoc = orders[index];
@@ -50,15 +51,22 @@ class AllOrdersPage extends StatelessWidget {
               final createdAt = order['created_at']?.toDate();
 
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
                 child: ListTile(
-                  title: Text("Order #$orderId"),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  title: Text(
+                    "Order #$orderId",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 6),
                       Text("User ID: $userId"),
-                      Text("Status: ${status.toString().toUpperCase()}"),
-                      Text("Total: ₦${total.toStringAsFixed(2)}"),
+                      Text("Status: ${status.toString().toUpperCase()}",
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text("Total: \$${total.toStringAsFixed(2)}"),
                       if (createdAt != null)
                         Text("Date: ${createdAt.toLocal().toString().split(' ').first}"),
                     ],
@@ -71,7 +79,6 @@ class AllOrdersPage extends StatelessWidget {
                         builder: (_) => AdminOrderDetailsPage(
                           orderData: order,
                           orderId: orderId,
-                          
                         ),
                       ),
                     );

@@ -85,7 +85,7 @@ class OrderDetailsPage extends StatelessWidget {
       Align(
         alignment: Alignment.centerRight,
         child: Text(
-          "Tota ${total.toStringAsFixed(2)}",
+          "Total: ${total.toStringAsFixed(2)}",
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
