@@ -254,7 +254,7 @@ class _BuyerHomePageState extends State<BuyerHomePage> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  "₦${product['price']}",
+                                  "\$${product['price']}",
                                   style: const TextStyle(color: Colors.pinkAccent, fontWeight: FontWeight.w600),
                                 ),
                               ],
